@@ -88,12 +88,13 @@ This setup lets one checkpoint handle both analysis (populism flag) and explanat
 
 ## Usage:
 
-install dependency:
-Bash: pip install transformers
+install dependency (Bash): 
+
+```pip install transformers```
 
 then run:
 
-import torch
+```import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 MODEL_ID = "tdickson17/Populism_detection"
@@ -147,15 +148,17 @@ def classify_populism_label(text: str, threshold: float = THRESHOLD, include_pro
 text = """<Insert Text here>"""
 print(classify_populism_label(text))
 print("\nSummary:\n", summarize(text))
+```
 
 
 
 ## Citation:
 
-@article{dickson2024going,
+```@article{dickson2024going,
   title={Going against the grain: Climate change as a wedge issue for the radical right},
   author={Dickson, Zachary P and Hobolt, Sara B},
   journal={Comparative Political Studies},
   year={2024},
   publisher={SAGE Publications Sage CA: Los Angeles, CA}
 }
+```
