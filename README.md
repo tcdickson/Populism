@@ -88,9 +88,17 @@ This setup lets one checkpoint handle both analysis (populism flag) and explanat
 
 ## Usage:
 
+There are 2 ways to use this model. 
+
+First:
+
+You can run the [test_model.ipynb](test_model.ipynb) file.
+
+Second:
+
 install dependency (Bash): 
 
-```pip install transformers```
+```pip install -U torch transformers```
 
 then run:
 
