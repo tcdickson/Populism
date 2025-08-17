@@ -86,6 +86,70 @@ Evaluation signals: ROUGE for summaries; Accuracy/Precision/Recall/F1 for classi
 
 This setup lets one checkpoint handle both analysis (populism flag) and explanation (summary) with simple instruction prefixes.
 
+## Usage:
+
+install dependency:
+Bash: pip install transformers
+
+then run:
+
+import torch
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
+MODEL_ID = "tdickson17/Populism_detection"
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+tok = AutoTokenizer.from_pretrained(MODEL_ID)
+model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_ID).to(device).eval()
+
+MAX_SRC, MAX_SUM = 1024, 128
+DEC_START = model.config.decoder_start_token_id
+ID0 = tok("0", add_special_tokens=False)["input_ids"][0]
+ID1 = tok("1", add_special_tokens=False)["input_ids"][0]
+
+THRESHOLD = 0.5  # raise for higher precision, lower for higher recall
+POSITIVE_MSG = "This text DOES contain populist sentiment.\n"
+NEGATIVE_MSG = "Populist sentiment is NOT detected in this text.\n"
+
+GEN_SUM = dict(
+    do_sample=False, num_beams=5,
+    max_new_tokens=MAX_SUM, min_new_tokens=16,
+    length_penalty=1.1, no_repeat_ngram_size=3
+)
+
+@torch.no_grad()
+def summarize(text: str) -> str:
+    enc = tok("summarize: " + text, return_tensors="pt",
+              truncation=True, max_length=MAX_SRC).to(device)
+    out = model.generate(**enc, **GEN_SUM)
+    s = tok.decode(out[0], skip_special_tokens=True).strip()
+    if s.lower().startswith("summarize:"):
+        s = s.split(":", 1)[1].strip()
+    return s
+
+@torch.no_grad()
+def classify_populism_prob(text: str) -> float:
+    enc = tok("classify_populism: " + text, return_tensors="pt",
+              truncation=True, max_length=MAX_SRC).to(device)
+    dec_inp = torch.tensor([[DEC_START]], device=device)
+    logits = model(**enc, decoder_input_ids=dec_inp, use_cache=False).logits[:, -1, :]
+
+    two = torch.stack([logits[:, ID0], logits[:, ID1]], dim=-1)
+    p1 = torch.softmax(two, dim=-1)[0, 1].item()
+    return p1
+
+def classify_populism_label(text: str, threshold: float = THRESHOLD, include_probability: bool = True) -> str:
+    p1 = classify_populism_prob(text)
+    msg = POSITIVE_MSG if p1 >= threshold else NEGATIVE_MSG
+    return f"{msg} Confidence={p1:.3f}%" if include_probability else msg
+
+# Example
+text = """<Insert Text here>"""
+print(classify_populism_label(text))
+print("\nSummary:\n", summarize(text))
+
+
+
 ## Citation:
 
 @article{dickson2024going,
