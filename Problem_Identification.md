@@ -1,3 +1,7 @@
+## Introduction
+
+-Tyler Dickson
+
 ## Problem Identification
 
 - Political discourse is increasingly influenced by **populist rhetoric**.  
